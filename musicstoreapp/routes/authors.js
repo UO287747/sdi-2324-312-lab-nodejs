@@ -1,20 +1,23 @@
 module.exports = function (app, twig) {
 
+    let authors = [{
+        "name": "Dan Reynolds",
+        "group": "Imagine Dragons",
+        "rol": "Cantante"
+    }, {
+        "name": "Chris Martin",
+        "group": "Coldplay",
+        "rol": "Cantante"
+    }, {
+        "name": "Joe Perry",
+        "group": "Aerosmith",
+        "rol": "Guitarrista"
+    }];
+
+    let roles = [ "Cantante", "Batería", "Guitarrista", "Bajista", "Pianista" ];
+
     app.get("/authors", function (req, res) {
 
-        let authors = [{
-            "name": "Dan Reynolds",
-            "group": "Imagine Dragons",
-            "rol": "Cantante"
-        }, {
-            "name": "Chris Martin",
-            "group": "Coldplay",
-            "rol": "Cantante"
-        }, {
-            "name": "Joe Perry",
-            "group": "Aerosmith",
-            "rol": "Guitarrista"
-        }];
         let response = {
             seller: 'Tienda de canciones',
             authors: authors
@@ -25,7 +28,12 @@ module.exports = function (app, twig) {
 
     app.get("/authors/add", function (req, res) {
 
-        res.render("authors/add.twig");
+        let response = {
+            seller: 'Tienda de canciones',
+            roles: roles
+        };
+
+        res.render("authors/add.twig", response);
     });
 
     app.post('/authors/add', function (req, res) {
@@ -38,6 +46,20 @@ module.exports = function (app, twig) {
             + " rol: " + (req.body.rol ? req.body.rol : "< Rol >" + undefinedText);
 
         res.send(response);
+    });
+
+    // Parámetros
+
+    app.get("/authors/filter/:rol", function (req, res) {
+
+        let authorsResult = authors.filter(author => author.rol.toLowerCase() === req.params.rol.toLowerCase());
+
+        let response = {
+            seller: 'Tienda de canciones',
+            authors: authorsResult
+        };
+
+        res.render("authors/authors.twig", response);
     });
 
     // Redirecciones
