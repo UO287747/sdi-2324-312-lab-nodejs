@@ -24,6 +24,13 @@ module.exports = function (app, twig) {
         res.render("add.twig");
     });
 
+    app.post('/songs/add', function (req, res) {
+        let response = "Canción agregada: " + req.body.title + "<br>"
+            + " genero: " + req.body.kind + "<br>" + " precio: " + req.body.price
+
+        res.send(response);
+    });
+
 
     app.get('/songs/:id', function(req, res) {
         let response = 'id: ' + req.params.id;
