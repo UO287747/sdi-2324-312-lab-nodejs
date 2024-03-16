@@ -10,6 +10,8 @@ const { MongoClient } = require("mongodb");
 const connectionStrings = "mongodb+srv://admin:sdi@musicstoreapp.htpbrhk.mongodb.net/?retryWrites=true&w=majority&appName=musicstoreapp";
 const dbClient = new MongoClient(connectionStrings);
 //app.set('connectionStrings', url);
+let songsRepository = require("./repositories/songsRepository.js");
+songsRepository.init(app, dbClient);
 
 
 let bodyParser = require('body-parser');
@@ -19,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
-require("./routes/songs.js")(app, dbClient);
+require("./routes/songs.js")(app, songsRepository);
 require("./routes/authors.js")(app);
 
 // view engine setup
