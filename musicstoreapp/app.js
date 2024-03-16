@@ -6,6 +6,14 @@ var logger = require('morgan');
 
 var app = express();
 
+let fileUpload = require('express-fileupload');
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 },
+  createParentPath: true
+}));
+app.set('uploadPath', __dirname)
+
+
 const { MongoClient } = require("mongodb");
 const connectionStrings = "mongodb+srv://admin:sdi@musicstoreapp.htpbrhk.mongodb.net/?retryWrites=true&w=majority&appName=musicstoreapp";
 const dbClient = new MongoClient(connectionStrings);
