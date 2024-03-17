@@ -6,6 +6,20 @@ var logger = require('morgan');
 
 var app = express();
 
+// Express Session
+let expressSession = require('express-session');
+app.use(expressSession({
+  secret: 'abcdefg',
+  resave: true,
+  saveUninitialized: true
+}));
+
+// Módulo Crypto
+let crypto = require('crypto');
+app.set('clave','abcdefg');
+app.set('crypto', crypto);
+
+// Express FileUpload
 let fileUpload = require('express-fileupload');
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 },
@@ -13,24 +27,33 @@ app.use(fileUpload({
 }));
 app.set('uploadPath', __dirname)
 
-
+// Mongo DB
 const { MongoClient } = require("mongodb");
 const connectionStrings = "mongodb+srv://admin:sdi@musicstoreapp.htpbrhk.mongodb.net/?retryWrites=true&w=majority&appName=musicstoreapp";
 const dbClient = new MongoClient(connectionStrings);
 //app.set('connectionStrings', url);
-let songsRepository = require("./repositories/songsRepository.js");
-songsRepository.init(app, dbClient);
 
-
+// BodyParser
 let bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 
+
+// Repositorios
+let songsRepository = require("./repositories/songsRepository.js");
+songsRepository.init(app, dbClient);
+
+const usersRepository = require("./repositories/usersRepository.js");
+usersRepository.init(app, dbClient);
+
+require("./routes/users.js")(app, usersRepository);
 require("./routes/songs.js")(app, songsRepository);
 require("./routes/authors.js")(app);
+
+var indexRouter = require('./routes/index');
+
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -43,7 +66,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
