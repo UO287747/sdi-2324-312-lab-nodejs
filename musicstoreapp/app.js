@@ -39,6 +39,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+// Session Router
+const userSessionRouter = require('./routes/userSessionRouter');
+const userAudiosRouter = require('./routes/userAudiosRouter');
+app.use("/songs/add", userSessionRouter);
+app.use("/publications", userSessionRouter);
+app.use("/audios/",userAudiosRouter);
+app.use("/shop/", userSessionRouter);
+
 
 // Repositorios
 let songsRepository = require("./repositories/songsRepository.js");

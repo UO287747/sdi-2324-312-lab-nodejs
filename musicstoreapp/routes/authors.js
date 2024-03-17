@@ -11,10 +11,10 @@ module.exports = function (app, twig) {
     }, {
         "name": "Joe Perry",
         "group": "Aerosmith",
-        "rol": "Guitarrista"
+        "rol": "Pianista"
     }];
 
-    let roles = [ "Cantante", "Batería", "Guitarrista", "Bajista", "Pianista" ];
+    let roles = [ "Cantante", "Trompetista", "Violinista", "Saxofonista", "Pianista" ];
 
     app.get("/authors", function (req, res) {
 
