@@ -43,6 +43,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const userSessionRouter = require('./routes/userSessionRouter');
 const userAudiosRouter = require('./routes/userAudiosRouter');
 app.use("/songs/add", userSessionRouter);
+app.use("/songs/favorites", userSessionRouter);
 app.use("/publications", userSessionRouter);
 app.use("/audios/",userAudiosRouter);
 app.use("/shop/", userSessionRouter);
@@ -55,7 +56,11 @@ songsRepository.init(app, dbClient);
 const usersRepository = require("./repositories/usersRepository.js");
 usersRepository.init(app, dbClient);
 
+const favoriteRepository = require("./repositories/favoritesRepository.js");
+favoriteRepository.init(app, dbClient);
+
 require("./routes/users.js")(app, usersRepository);
+require("./routes/favorites.js")(app, songsRepository, favoriteRepository);
 require("./routes/songs.js")(app, songsRepository);
 require("./routes/authors.js")(app);
 
