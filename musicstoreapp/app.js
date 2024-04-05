@@ -41,12 +41,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Session Router
 const userSessionRouter = require('./routes/userSessionRouter');
+const userAuthorRouter = require('./routes/userAuthorRouter');
 const userAudiosRouter = require('./routes/userAudiosRouter');
 app.use("/songs/add", userSessionRouter);
 app.use("/songs/favorites", userSessionRouter);
 app.use("/publications", userSessionRouter);
-app.use("/audios/",userAudiosRouter);
+app.use("/audios/", userAudiosRouter);
 app.use("/shop/", userSessionRouter);
+app.use("/songs/edit", userAuthorRouter);
+app.use("/songs/delete", userAuthorRouter);
 
 
 // Repositorios
