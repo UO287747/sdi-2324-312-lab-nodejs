@@ -6,6 +6,11 @@ var logger = require('morgan');
 
 var app = express();
 
+//JSON Web Token
+let jwt = require('jsonwebtoken');
+app.set('jwt', jwt);
+
+
 // Express Session
 let expressSession = require('express-session');
 app.use(expressSession({
@@ -43,6 +48,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const userSessionRouter = require('./routes/userSessionRouter');
 const userAuthorRouter = require('./routes/userAuthorRouter');
 const userAudiosRouter = require('./routes/userAudiosRouter');
+const userTokenRouter = require('./routes/userTokenRouter');
+
 app.use("/songs/add", userSessionRouter);
 app.use("/songs/favorites", userSessionRouter);
 app.use("/publications", userSessionRouter);
@@ -52,7 +59,7 @@ app.use("/audios/", userAudiosRouter);
 app.use("/shop/", userSessionRouter);
 app.use("/songs/edit", userAuthorRouter);
 app.use("/songs/delete", userAuthorRouter);
-
+app.use("/api/v1.0/songs/", userTokenRouter);
 
 // Repositorios
 let songsRepository = require("./repositories/songsRepository.js");
@@ -68,7 +75,7 @@ require("./routes/users.js")(app, usersRepository);
 require("./routes/favorites.js")(app, songsRepository, favoriteRepository);
 require("./routes/songs.js")(app, songsRepository);
 require("./routes/authors.js")(app);
-require("./routes/api/songsAPIv1.0.js")(app, songsRepository);
+require("./routes/api/songsAPIv1.0.js")(app, songsRepository, usersRepository);
 
 var indexRouter = require('./routes/index');
 
