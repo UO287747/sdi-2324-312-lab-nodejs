@@ -68,6 +68,7 @@ require("./routes/users.js")(app, usersRepository);
 require("./routes/favorites.js")(app, songsRepository, favoriteRepository);
 require("./routes/songs.js")(app, songsRepository);
 require("./routes/authors.js")(app);
+require("./routes/api/songsAPIv1.0.js")(app, songsRepository);
 
 var indexRouter = require('./routes/index');
 
