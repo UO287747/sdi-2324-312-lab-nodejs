@@ -216,7 +216,23 @@ module.exports = function (app, songsRepository) {
             const song = await songsRepository.findSong(filter, options);
             const buyable = await canBuyASong(user, song._id);
 
-            res.render("songs/song.twig", {song: song, buyable: buyable});
+            let settings = {
+                url: "https://api.apilayer.com/currency_data/live?source=USD&currencies=EUR%2CUSD",
+                headers: {
+                    "apikey": "nw0V7iVnCkYE9CysYv9UMiIzLt2nuTX5"
+                },
+                method: "get"
+            }
+            let rest = app.get("rest");
+            rest(settings, function (error, response, body) {
+                console.log("cod: " + response.statusCode + " Cuerpo :" + body);
+                let responseObject = JSON.parse(body);
+                let rateUSD = responseObject.quotes.USDEUR;
+                // nuevo campo "usd" redondeado a dos decimales
+                let songValue = song.price / rateUSD
+                song.usd = Math.round(songValue * 100) / 100;
+                res.render("songs/song.twig", {song: song, buyable: buyable});
+            });
 
         } catch (error) {
             res.send("Se ha producido un error al buscar la canción " + error);

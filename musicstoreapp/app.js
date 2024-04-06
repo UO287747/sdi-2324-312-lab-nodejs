@@ -6,6 +6,10 @@ var logger = require('morgan');
 
 var app = express();
 
+// Modulo Request
+let rest = require('request');
+app.set('rest', rest);
+
 // Cabeceras Access-Control-Allow-*
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
