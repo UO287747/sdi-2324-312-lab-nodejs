@@ -1,4 +1,6 @@
 const {ObjectId} = require("mongodb");
+const {validationResult} = require("express-validator");
+const {songValidatorUpdate} = require("./songValidatorUpdate");
 
 module.exports = function (app, songsRepository, usersRepository) {
 
@@ -44,17 +46,21 @@ module.exports = function (app, songsRepository, usersRepository) {
             let songId = new ObjectId(req.params.id)
             let filter = {_id: songId}
 
-            songsRepository.deleteSong(filter, {}).then(result => {
-                if (result === null || result.deletedCount === 0) {
-                    res.status(404);
-                    res.json({error: "ID inválido o no existe, no se ha borrado el registro."});
-                } else {
-                    res.status(200);
-                    res.send(JSON.stringify(result));
+            isUserAuthor(res.user, songId).then(isAuthor => {
+                if (isAuthor) {
+                    songsRepository.deleteSong(filter, {}).then(result => {
+                        if (result === null || result.deletedCount === 0) {
+                            res.status(404);
+                            res.json({error: "ID inválido o no existe, no se ha borrado el registro."});
+                        } else {
+                            res.status(200);
+                            res.send(JSON.stringify(result));
+                        }
+                    }).catch(error => {
+                        res.status(500);
+                        res.json({error: "Se ha producido un error al eliminar la canción."})
+                    });
                 }
-            }).catch(error => {
-                res.status(500);
-                res.json({error: "Se ha producido un error al eliminar la canción."})
             });
         } catch (e) {
             res.status(500);
@@ -68,19 +74,26 @@ module.exports = function (app, songsRepository, usersRepository) {
                 title: req.body.title,
                 kind: req.body.kind,
                 price: req.body.price,
-                author: req.session.user
+                author: res.user
             }
             // Validar aquí: título, género, precio y autor.
-            songsRepository.insertSong(song, function (songId) {
-                if (songId === null) {
-                    res.status(409);
-                    res.json({error: "No se ha podido crear la canción. El recurso ya existe."});
+            validatorInsertSong(song, function(errors) {
+                if (errors !== null && errors.length > 0) {
+                    res.status(422);
+                    res.json({errors: errors});
                 } else {
-                    res.status(201);
-                    res.json({
-                        message: "Canción añadida correctamente.",
-                        _id: songId
-                    })
+                    songsRepository.insertSong(song, function (songId) {
+                        if (songId === null) {
+                            res.status(409);
+                            res.json({error: "No se ha podido crear la canción. El recurso ya existe."});
+                        } else {
+                            res.status(201);
+                            res.json({
+                                message: "Canción añadida correctamente.",
+                                _id: songId
+                            })
+                        }
+                    });
                 }
             });
         } catch (e) {
@@ -89,49 +102,50 @@ module.exports = function (app, songsRepository, usersRepository) {
         }
     });
 
-    app.put('/api/v1.0/songs/:id', function (req, res) {
-        try {
+    app.put('/api/v1.0/songs/:id', songValidatorUpdate, function (req, res) {
 
-            let songId = new ObjectId(req.params.id);
-            let filter = {_id: songId};
-            //Si la _id NO no existe, no crea un nuevo documento.
-            const options = {upsert: false};
-            let song = {
-                author: req.session.user
+            let errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                res.status(422);
+                res.json({errors:errors.array()})
+            } else {
+
+                let songId = new ObjectId(req.params.id);
+                let filter = {_id: songId};
+                //Si la _id NO no existe, no crea un nuevo documento.
+                const options = {upsert: false};
+                let song = {
+                    author: res.user
+                }
+
+                if (typeof req.body.title !== "undefined" && req.body.title !== null)
+                    song.title = req.body.title;
+                if (typeof req.body.kind !== "undefined" && req.body.kind !== null)
+                    song.kind = req.body.kind;
+                if (typeof req.body.price !== "undefined" && req.body.price !== null)
+                    song.price = req.body.price;
+
+                songsRepository.updateSong(song, filter, options).then(result => {
+                    if (result === null) {
+                        res.status(404);
+                        res.json({error: "ID inválido o no existe, no se ha actualizado la canción."});
+                    }
+                    //La _id No existe o los datos enviados no difieren de los ya almacenados.
+                    else if (result.modifiedCount == 0) {
+                        res.status(409);
+                        res.json({error: "No se ha modificado ninguna canción."});
+                    } else {
+                        res.status(200);
+                        res.json({
+                            message: "Canción modificada correctamente.",
+                            result: result
+                        })
+                    }
+                }).catch(error => {
+                    res.status(500);
+                    res.json({error: "Se ha producido un error al modificar la canción."})
+                });
             }
-
-            if (typeof req.body.title !== "undefined" && req.body.title !== null)
-                song.title = req.body.title;
-            if (typeof req.body.kind !== "undefined" && req.body.kind !== null)
-                song.kind = req.body.kind;
-            if (typeof req.body.price !== "undefined" && req.body.price !== null)
-                song.price = req.body.price;
-
-            songsRepository.updateSong(song, filter, options).then(result => {
-                if (result === null) {
-                    res.status(404);
-                    res.json({error: "ID inválido o no existe, no se ha actualizado la canción."});
-                }
-                //La _id No existe o los datos enviados no difieren de los ya almacenados.
-                else if (result.modifiedCount == 0) {
-                    res.status(409);
-                    res.json({error: "No se ha modificado ninguna canción."});
-                }
-                else{
-                    res.status(200);
-                    res.json({
-                        message: "Canción modificada correctamente.",
-                        result: result
-                    })
-                }
-            }).catch(error => {
-                res.status(500);
-                res.json({error : "Se ha producido un error al modificar la canción."})
-            });
-        } catch (e) {
-            res.status(500);
-            res.json({error: "Se ha producido un error al intentar modificar la canción: "+ e})
-        }
     });
 
     app.post('/api/v1.0/users/login', function (req, res) {
@@ -180,4 +194,53 @@ module.exports = function (app, songsRepository, usersRepository) {
         }
     });
 
+    function validatorInsertSong(song, callbackFunction) {
+
+        let errors = new Array();
+        if (song.title === null || typeof song.title === 'undefined' || song.title.trim().length == 0)
+            errors.push({
+                "value": song.title,
+                "msg": "El título de la canción no puede estar vacío",
+                "param": "title",
+                "location": "body"
+            });
+
+        if (song.kind === null || typeof song.kind === 'undefined' || song.kind.trim().length == 0)
+            errors.push({
+                "value": song.kind,
+                "msg": "El género de la canción no puede estar vacío",
+                "param": "kind",
+                "location": "body"
+            });
+
+        if (song.price === null || typeof song.price === 'undefined' || song.price < 0 || song.price.toString().trim().length == 0)
+            errors.push({
+                "value": song.price,
+                "msg": "El precio de la canción no puede ser negativo",
+                "param": "price",
+                "location": "body"
+            });
+
+        if (errors.length <= 0)
+            callbackFunction(null);
+        else
+            callbackFunction(errors);
+    };
+
+    async function isUserAuthor(user, songId) {
+
+        let filterSongAuthor = {$and: [{"_id": songId}, {"author": user}]};
+        let options = {};
+        try {
+            const songs = await  songsRepository.getSongs(filterSongAuthor, options);
+            if (songs.length > 0) {
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (error) {
+            return false;
+        }
+    }
 };

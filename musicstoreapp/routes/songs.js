@@ -174,7 +174,6 @@ module.exports = function (app, songsRepository) {
 
         const songs = await songsRepository.getSongs(filterSongs, {});
         if (songs != null && songs.length > 0) {
-            console.log("soy autor");
             result = false;
         }
 
@@ -182,11 +181,8 @@ module.exports = function (app, songsRepository) {
 
         const purchases = await songsRepository.getPurchases(filterBought, {});
         if (purchases != null && purchases.length > 0) {
-            console.log("ya comprada");
             result = false;
         }
-
-        if (result) { console.log("comprable"); }
         return result;
     }
 
